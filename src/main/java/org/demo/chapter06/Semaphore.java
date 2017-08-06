@@ -121,8 +121,8 @@ public class Semaphore {
     public String acquireFairSemaphore(String semname, int limit, long timeout) {
         //128位随机标识符
         String identifier = UUID.randomUUID().toString();
-        String czset = semname + ":owner";
-        String ctr = semname + ":counter";
+        String czset = getOwnerKey(semname);
+        String ctr = getCounterKey(semname);
 
         long now = System.currentTimeMillis();
         Transaction trans = conn.multi();
@@ -173,7 +173,7 @@ public class Semaphore {
     public boolean releaseFairSemaphore(String semname, String identifier) {
         Transaction trans = conn.multi();
         trans.zrem(semname, identifier);
-        trans.zrem(semname + ":owner", identifier);
+        trans.zrem(getOwnerKey(semname), identifier);
         List<Object> results = trans.exec();
         return (Long) results.get(results.size() - 1) == 1;
     }
@@ -215,6 +215,14 @@ public class Semaphore {
             }
         }
         return null;
+    }
+
+    private String getOwnerKey(String semname){
+        return semname + ":owner";
+    }
+
+    private String getCounterKey(String semname){
+        return semname + ":counter";
     }
 
 }

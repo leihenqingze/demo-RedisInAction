@@ -83,13 +83,13 @@ public class DistributedLock {
      * 者超过给定的时限为止.
      *
      * @param lockName    锁名称
-     * @param acquireTime 获取锁超时时间(毫秒)
+     * @param acquireTime 获取锁超时时间(秒)
      * @return 锁标识
      */
     public String acquireLock(String lockName, long acquireTime) {
         //128位随机标识符
         String identifier = UUID.randomUUID().toString();
-        long end = System.currentTimeMillis() + acquireTime;
+        long end = System.currentTimeMillis() + (acquireTime * 1000);
         while (System.currentTimeMillis() < end) {
             //尝试获取锁
             if (conn.setnx(getLockKey(lockName), identifier) == 1) {
@@ -144,18 +144,18 @@ public class DistributedLock {
      * 的情况下仍然能够自动被释放,客户端会在尝试获取锁失败之后,检查锁的超时时间,并为未设置
      * 超时时间的锁设置超时时间.
      * @param lockName    锁名称
-     * @param acquireTime 获取锁超时时间(毫秒)
-     * @param lockTimeout 锁超时时间(毫秒)
-     * @return
+     * @param acquireTime 获取锁超时时间(秒)
+     * @param lockTimeout 锁超时时间(秒)
+     * @return 锁标识
      */
     public String acquireLockWithTimeout(String lockName, long acquireTime, int lockTimeout) {
         String lockKey = getLockKey(lockName);
         //128位随机标识符
         String identifier = UUID.randomUUID().toString();
         //确保传给EXPIRE的都是整数
-        int lockExpire = (int) (lockTimeout / 1000);
+        int lockExpire = lockTimeout / 1000;
 
-        long end = System.currentTimeMillis() + acquireTime;
+        long end = System.currentTimeMillis() + (acquireTime * 1000);
         while (System.currentTimeMillis() < end) {
             //获取锁并设置过期时间
             if (conn.setnx(lockKey, identifier) == 1) {
